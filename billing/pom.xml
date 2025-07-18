@@ -21,6 +21,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <java.version>17</java.version>
+        <mapstruct.version>1.6.3</mapstruct.version>
+        <lombok.version>1.18.38</lombok.version>
     </properties>
     
     <dependencyManagement>
@@ -71,7 +73,7 @@
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>       
+            <artifactId>lombok</artifactId>
         </dependency>
         <dependency>
             <groupId>de.codecentric</groupId>
@@ -88,6 +90,11 @@
             <artifactId>springdoc-openapi-ui</artifactId>
             <version>1.8.0</version>
         </dependency>
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct</artifactId>
+            <version>${mapstruct.version}</version>
+        </dependency>
     </dependencies>
     
     <build>
@@ -97,6 +104,27 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
                     <fork>true</fork>
+                </configuration>
+            </plugin>
+            
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.14.0</version>
+                <configuration>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                        <path>
+                            <groupId>mapstruct</groupId>
+                            <artifactId>mapstruct-processor</artifactId>
+                            <version>${mapstruct.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                    <release>${java.version}</release>
                 </configuration>
             </plugin>
         </plugins>

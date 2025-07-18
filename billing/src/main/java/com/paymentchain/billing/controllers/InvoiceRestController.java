@@ -5,6 +5,8 @@
  */
 package com.paymentchain.billing.controllers;
 
+import com.paymentchain.billing.dto.InvoiceRequest;
+import com.paymentchain.billing.dto.InvoiceResponse;
 import com.paymentchain.billing.entities.Invoice;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -46,7 +48,7 @@ public class InvoiceRestController {
         @ApiResponse(responseCode = "204", description = "No invoices found"),
         @ApiResponse(responseCode = "500", description = "Internal error")})
     @GetMapping()
-    public List<Invoice> list() {
+    public List<InvoiceResponse> list() {
         return billingRepository.findAll();
     }
     
@@ -74,7 +76,7 @@ public class InvoiceRestController {
         @ApiResponse(responseCode = "400", description = "Invalid input data"),
         @ApiResponse(responseCode = "500", description = "Internal server error")})
     @PutMapping("/{id}")
-    public ResponseEntity<?> put(@PathVariable String id, @RequestBody Invoice input) {
+    public ResponseEntity<?> put(@PathVariable String id, @RequestBody InvoiceRequest input) {
         return null;
     }
     
@@ -85,7 +87,7 @@ public class InvoiceRestController {
         @ApiResponse(responseCode = "400", description = "Invalid input data"),
         @ApiResponse( responseCode = "500", description = "Internal server error")})
     @PostMapping
-    public ResponseEntity<?> post(@RequestBody Invoice input) {
+    public ResponseEntity<?> post(@RequestBody InvoiceRequest input) {
         Invoice save = billingRepository.save(input);
         return ResponseEntity.ok(save);
     }
