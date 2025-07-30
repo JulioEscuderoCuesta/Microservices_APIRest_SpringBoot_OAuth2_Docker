@@ -39,16 +39,16 @@ public class SecurityConfiguration {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         // Version 1. Full security in order to ask by user and password before to acces swagger ui
-        /*http
+        http
             .authorizeHttpRequests((authorize) -> authorize
                 .anyRequest().authenticated()
             ) 
             .httpBasic(Customizer.withDefaults())
             .formLogin(Customizer.withDefaults())
-            .csrf(csrf -> csrf.disable());*/
+            .csrf(csrf -> csrf.disable());
                
         // Version 2. Custom security configuration, we can excluse some paths and ask by user and password before each request to acces swagger ui
-        http
+        /*http
             // Settings cors here is useless right now cause Swagger runs on the same site, but we're practising
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
@@ -59,9 +59,8 @@ public class SecurityConfiguration {
                 .anyRequest().authenticated()
             )
             .httpBasic(Customizer.withDefaults())
-            .formLogin(Customizer.withDefaults());
+            .formLogin(Customizer.withDefaults());*/
         return http.build();
-
     }
     
     @Bean
