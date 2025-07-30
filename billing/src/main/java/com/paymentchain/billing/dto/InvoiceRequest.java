@@ -16,11 +16,11 @@ import lombok.Data;
 public class InvoiceRequest {
 
     @Schema(description = "Unique identifier of the customer who owns this invoice", example = "2")
-    private long customer;
+    private Long customer;
     @Schema( description = "Invoice number as it appears on the physical invoice", example = "123", maxLength = 50)
     private String number;
     @Schema(description = "Detailed description of the invoice items or services", example = "Professional services consultation for Q1 2024", maxLength = 500)
     private String detail;
     @Schema(description = "Total amount of the invoice in the base currency", example = "1500.75", minimum = "0")
-    private double amount;
+    private Double amount;
 }

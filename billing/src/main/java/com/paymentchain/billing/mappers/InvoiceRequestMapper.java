@@ -19,14 +19,18 @@ import org.mapstruct.Mappings;
 @Mapper(componentModel = "spring")
 public interface InvoiceRequestMapper {
     
-    @Mappings({@Mapping(source = "customer", target = "customerId")})
+    @Mappings({
+        @Mapping(source = "customer", target = "customerId"),
+        @Mapping(target = "id", ignore = true)
+    })
     Invoice InvoiceRequestToInvoice(InvoiceRequest source);
     
-    List<Invoice> InvoiceRequestListToInvoiceList(InvoiceRequest source);
+    List<Invoice> InvoiceRequestListToInvoiceList(List<InvoiceRequest> source);
     
     @InheritInverseConfiguration
+    @Mappings({@Mapping(source = "customerId", target = "customer")})
     InvoiceRequest InvoiceToInvoiceRequest(Invoice source);
     
     @InheritInverseConfiguration
-    List<InvoiceRequest> InvoicetListToInvoiceRequestList(Invoice source);
+    List<InvoiceRequest> InvoicetListToInvoiceRequestList(List<Invoice> source);
 }

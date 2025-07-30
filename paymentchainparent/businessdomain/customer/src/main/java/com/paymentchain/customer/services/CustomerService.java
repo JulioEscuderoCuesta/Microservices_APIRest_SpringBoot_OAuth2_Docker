@@ -71,7 +71,7 @@ public class CustomerService {
             .collect(Collectors.toList());
     }
     
-    public CustomerDTO getCustomerById(Long id) throws CustomerException {
+    public CustomerDTO getCustomerById(Long id) {
         Customer customer = customerRepository.findByIdWithProducts(id)
             .orElseThrow(() -> new CustomerException(
                 id,
@@ -92,7 +92,7 @@ public class CustomerService {
             ));
     }
     
-    public CustomerDTO getCustomerByCode(String code) throws CustomerException {
+    public CustomerDTO getCustomerByCode(String code) {
         Customer customer = customerRepository.findByCodeWithProducts(code)
             .orElseThrow(() -> new CustomerException(
                 "CUSTOMER_NOT_FOUND_BY_CODE", 
@@ -102,7 +102,7 @@ public class CustomerService {
         return convertToDTO(customer);
     }
     
-    public CustomerDTO getCustomerByIban(String iban) throws CustomerException {
+    public CustomerDTO getCustomerByIban(String iban) {
         Customer customer = customerRepository.findByIban(iban)
             .orElseThrow(() -> new CustomerException(
                 "CUSTOMER_NOT_FOUND_BY_IBAN", 
