@@ -11,20 +11,19 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import lombok.Data;
 
-
-
 /**
  *
- * @author sotobotero
+ * @author Julio Escudero Cuesta
  */
 @Entity
 @Data
 public class Invoice {
-   @Id
-  @GeneratedValue(strategy=GenerationType.AUTO)
-   private long id;
-   private long customerId;
-   private String number;
-   private String detail;
-   private double amount;  
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private long id;
+    private long customerId;
+    private String number;
+    private String detail;
+    private double amount;
 }
