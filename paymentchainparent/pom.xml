@@ -58,6 +58,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding> 
         <postgres.version>42.7.2</postgres.version>    
         <java-validation.version>2.0.1.Final</java-validation.version> 
+        <org.lombok.version>1.18.36</org.lombok.version>    
         <dockerfile-maven-version>1.4.13</dockerfile-maven-version>
         <spring-cloud.version>2024.0.0</spring-cloud.version>
     </properties>
@@ -77,6 +78,11 @@
                 <version>${spring-cloud.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            <dependency>
+                    <groupId>org.projectlombok</groupId>
+                    <artifactId>lombok</artifactId>
+                    <version>${org.lombok.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>  
