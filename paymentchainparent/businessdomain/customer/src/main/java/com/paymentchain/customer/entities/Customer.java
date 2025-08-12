@@ -12,6 +12,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import jakarta.validation.constraints.NotBlank;
 import java.util.List;
@@ -23,9 +24,10 @@ import lombok.Data;
  */
 @Data
 @Entity
+@Table(name = "customers")
 public class Customer {
     
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Id
     @NotBlank(message = "IBAN cannot be blank")
     private long id;

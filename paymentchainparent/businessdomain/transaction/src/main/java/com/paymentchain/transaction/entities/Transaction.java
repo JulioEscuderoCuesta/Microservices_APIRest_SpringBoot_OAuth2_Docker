@@ -9,9 +9,9 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import java.time.LocalDateTime;
 import lombok.Data;
@@ -22,6 +22,7 @@ import lombok.Data;
  */
 @Entity
 @Data
+@Table(name = "transactions")
 public class Transaction {
     
     @GeneratedValue(strategy = GenerationType.IDENTITY)

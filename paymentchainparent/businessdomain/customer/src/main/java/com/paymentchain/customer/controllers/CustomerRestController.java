@@ -13,10 +13,10 @@ import com.paymentchain.customer.services.CustomerService;
 import java.net.URI;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.core.env.Environment;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,12 +32,11 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
  */
 @RestController
 @RequestMapping("/customer")
+@CrossOrigin(origins = "http://localhost:3000")
 public class CustomerRestController {
     
     @Autowired
     CustomerService customerService;
-    @Autowired
-    private Environment env;
 
     //Http Methods
     @GetMapping()
@@ -47,11 +46,6 @@ public class CustomerRestController {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.ok(customers);        
-    }
-    
-    @GetMapping("/check")
-    public String check() {
-        return "Hello your property value is: " + env.getProperty("custom.activeprofileName");
     }
     
     @GetMapping("/{id}")

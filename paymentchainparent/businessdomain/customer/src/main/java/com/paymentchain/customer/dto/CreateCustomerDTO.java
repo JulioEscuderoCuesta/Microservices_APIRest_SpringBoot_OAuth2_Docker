@@ -4,6 +4,7 @@
  */
 package com.paymentchain.customer.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 /**
@@ -12,10 +13,21 @@ import lombok.Data;
  */
 @Data
 public class CreateCustomerDTO {
+    @NotBlank(message = "Name cannot be blank")
     private String name;
+    
+    @NotBlank(message = "Code cannot be blank")
     private String code;
+    
+    @NotBlank(message = "Phone cannot be blank")
     private String phone;
+    
+    @NotBlank(message = "IBAN cannot be blank")
     private String iban;
+    
+    @NotBlank(message = "Surname cannot be blank")
     private String surname;
+    
+    @NotBlank(message = "Address cannot be blank")
     private String address;
 }

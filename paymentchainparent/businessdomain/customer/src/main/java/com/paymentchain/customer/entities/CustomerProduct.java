@@ -11,6 +11,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import lombok.Data;
 
@@ -20,10 +21,11 @@ import lombok.Data;
  */
 @Data
 @Entity
+@Table(name = "customer_products")
 public class CustomerProduct {
     
      @Id
-     @GeneratedValue(strategy=GenerationType.AUTO)
+     @GeneratedValue(strategy=GenerationType.IDENTITY)
      private long id;
      private long productId;
      @Transient

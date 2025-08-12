@@ -50,11 +50,6 @@ public class ProductRestController {
     
     @PostMapping
     public ResponseEntity<?> post(@Valid @RequestBody ProductDTO productDTO) {
-        System.out.println("=== DEBUGGING ===");
-        System.out.println("Name: '" + productDTO.getName() + "'");
-        System.out.println("Code: '" + productDTO.getCode() + "'");
-        System.out.println("Name is blank: " + (productDTO.getName() == null || productDTO.getName().trim().isEmpty()));
-        System.out.println("Code is blank: " + (productDTO.getCode() == null || productDTO.getCode().trim().isEmpty()));
         Product product = productService.createProduct(productDTO);
 
         URI location = ServletUriComponentsBuilder
