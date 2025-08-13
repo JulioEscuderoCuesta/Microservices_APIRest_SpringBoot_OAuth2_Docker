@@ -22,6 +22,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.dao.DataIntegrityViolationException;
 import jakarta.validation.ConstraintViolationException;
+import java.time.Duration;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
 
 /**
  *
@@ -49,26 +54,8 @@ public class CustomerService {
         List<Customer> customers = customerRepository.findCustomers();
 
         return customers.stream()
-            .map(customer -> {
-                CustomerDTO dto = new CustomerDTO();
-                dto.setId(customer.getId());
-                dto.setName(customer.getName());
-                dto.setBalance(customer.getBalance());
-                dto.setCode(customer.getCode());
-                dto.setPhone(customer.getPhone());
-                dto.setIban(customer.getIban());
-                dto.setSurname(customer.getSurname());
-                dto.setAddress(customer.getAddress());
-
-                List<CustomerProductDTO> productDTOs = mapCustomerProducts(customer); 
-                dto.setProducts(productDTOs);
-                
-                List<TransactionDTO> transactions = transactionClientService.getTransactions(customer.getIban());
-                dto.setTransactions(transactions);
-                
-                return dto;  
-            })
-            .collect(Collectors.toList());
+                .map(this::convertToDTOWithExternalServices)
+                .collect(Collectors.toList());
     }
     
     public CustomerDTO getCustomerById(Long id) {
@@ -79,7 +66,7 @@ public class CustomerService {
                 "Customer with id " + id + " does not exist", 
                 HttpStatus.NOT_FOUND
             ));
-        return convertToDTO(customer);
+        return convertToDTOWithExternalServices(customer);
     }
     
     public Double getCustomerBalance(Long id) {
@@ -99,7 +86,7 @@ public class CustomerService {
                 "Customer with code " + code + " does not exist", 
                 HttpStatus.NOT_FOUND
             ));
-        return convertToDTO(customer);
+        return convertToDTOWithExternalServices(customer);
     }
     
     public CustomerDTO getCustomerByIban(String iban) {
@@ -109,19 +96,26 @@ public class CustomerService {
                 "Customer with IBAN " + iban + " does not exist", 
                 HttpStatus.NOT_FOUND
             ));
-        return convertToDTO(customer);
+        return convertToDTOWithExternalServices(customer);
     }
     
-    public List<TransactionDTO> getTransactionsByIban(String iban) {
-        List<TransactionDTO> transactions = transactionClientService.getTransactions(iban);
-        return transactions;   
+    public List<TransactionDTO> getCustomerTransactionsByIban(String iban) {
+        Optional<List<TransactionDTO>> transactionsOpt = 
+            transactionClientService.getCustomerTransactionsByIban(iban);
+        
+        if (transactionsOpt.isPresent()) {
+            return transactionsOpt.get();
+        } else {
+            log.warn("Transaction service unavailable for IBAN: {}", iban);
+            return Collections.emptyList();
+        }
     }
 
 
     public CustomerDTO createCustomer(CreateCustomerDTO createCustomerDTO) {
         Customer customer = new Customer();
         customer.setName(createCustomerDTO.getName());
-        customer.setBalance(0);
+        customer.setBalance(0.0);
         customer.setCode(createCustomerDTO.getCode());
         customer.setPhone(createCustomerDTO.getPhone());
         customer.setIban(createCustomerDTO.getIban());
@@ -130,7 +124,7 @@ public class CustomerService {
         
         try {
             Customer savedCustomer = customerRepository.save(customer);
-            return convertToDTO(savedCustomer);
+            return convertToDTOBasic(savedCustomer);
 
         } catch (DataIntegrityViolationException  e) {
             throw new CustomerException(
@@ -166,7 +160,7 @@ public class CustomerService {
             ));
 
         customerRepository.deleteById(id);
-        return convertToDTO(customer);
+        return convertToDTOBasic(customer);
     }
     
     public CustomerDTO updateCustomer(Long id, UpdateCustomerDTO updateDTO) {
@@ -186,7 +180,7 @@ public class CustomerService {
         if (updateDTO.getAddress() != null) customer.setAddress(updateDTO.getAddress());
 
         Customer updatedCustomer = customerRepository.save(customer);
-        return convertToDTO(updatedCustomer);
+        return convertToDTOWithExternalServices(updatedCustomer);
     }
     
     public CustomerDTO updateBalance(String iban, double amount) {
@@ -209,7 +203,7 @@ public class CustomerService {
         else {
             customer.setBalance(finalBalance);
             Customer savedCustomer = customerRepository.save(customer);
-            return convertToDTO(savedCustomer);
+            return convertToDTOBasic(savedCustomer);
         }
     }
     
@@ -236,7 +230,7 @@ public class CustomerService {
 
         Customer savedCustomer = customerRepository.save(customer);
 
-        return convertToDTO(savedCustomer);
+        return convertToDTOWithExternalServices(savedCustomer);
         
     }
 
@@ -257,11 +251,11 @@ public class CustomerService {
         }
         
         Customer savedCustomer = customerRepository.save(customer);
-        return convertToDTO(savedCustomer);
+        return convertToDTOWithExternalServices(savedCustomer);
   
     }
     
-    private CustomerDTO convertToDTO(Customer customer) {
+    private CustomerDTO convertToDTOBasic(Customer customer) {
         CustomerDTO dto = new CustomerDTO();
         dto.setId(customer.getId());
         dto.setName(customer.getName());
@@ -271,24 +265,54 @@ public class CustomerService {
         dto.setIban(customer.getIban());
         dto.setSurname(customer.getSurname());
         dto.setAddress(customer.getAddress());
-    
-        if (customer.getProducts() != null) {            
-            List<CustomerProductDTO> productDTOs = customer.getProducts().stream()
-                .map(product -> {
-                    CustomerProductDTO productDTO = new CustomerProductDTO();
-                    productDTO.setId(product.getId());
-                    productDTO.setProductId(product.getProductId());
-                    
-                    ProductDTO productInfo = productClientService.getProduct(product.getProductId()).block();
-                    if (productInfo != null)
-                        productDTO.setProductName(productInfo.getName());
-                    return productDTO;
-                })
-                .collect(Collectors.toList());
-            dto.setProducts(productDTOs);
-        }
         
         return dto;
+    }
+    
+    private CustomerDTO convertToDTOWithExternalServices(Customer customer) {
+        CustomerDTO customerDTO = convertToDTOBasic(customer);
+        
+        // Obtain products if possible
+        enrichWithProducts(customerDTO, customer);
+        // Obtain transactions if possible
+        enrichWithTransactions(customerDTO, customer);
+        
+        return customerDTO;
+    }
+    
+    private void enrichWithProducts(CustomerDTO dto, Customer customer) {
+        try {
+            List<CustomerProductDTO> products = mapCustomerProducts(customer);
+            dto.setProducts(products);
+            dto.setProductsAvailable(true);
+        } catch (Exception e) {
+            log.warn("Product service unavailable for customer {}: {}", customer.getId(), e.getMessage());
+            dto.setProducts(Collections.emptyList());
+            dto.setProductsAvailable(false);
+            dto.setProductsError("Product service temporarily unavailable");
+        }
+    }
+    
+    private void enrichWithTransactions(CustomerDTO dto, Customer customer) {
+        try {
+            Optional<List<TransactionDTO>> transactionsOpt = 
+            transactionClientService.getCustomerTransactionsByIban(customer.getIban());
+        
+            dto.setTransactionsAvailable(true);
+
+            if (transactionsOpt.isPresent()) {
+                dto.setTransactions(transactionsOpt.get());
+            } else {
+                dto.setTransactions(Collections.emptyList());
+            }
+            
+        } catch (Exception e) {
+            log.warn("Unexpected error getting transactions for customer {}: {}", customer.getId(), e.getMessage());
+            dto.setTransactions(Collections.emptyList());
+            dto.setTransactionsAvailable(false);
+            dto.setTransactionsError("Transaction service temporarily unavailable");
+        }
+
     }
     
     private Customer findCustomerById(Long customerId) {
@@ -302,23 +326,81 @@ public class CustomerService {
     }
     
     private List<CustomerProductDTO> mapCustomerProducts(Customer customer) {
+        List<Long> productIds = customer.getProducts().stream()
+            .map(CustomerProduct::getProductId)
+            .collect(Collectors.toList());
+        
+        if (productIds.isEmpty()) 
+            return testProductServiceAvailability();
+        
+        Map<Long, ProductDTO> productInfoMap = getProductsBatch(productIds);
+        
         return customer.getProducts().stream()
-                    .map(product -> {
-                        CustomerProductDTO productDTO = new CustomerProductDTO();
-                        productDTO.setId(product.getId());
-                        productDTO.setProductId(product.getProductId());
+            .map(product -> {
+                CustomerProductDTO productDTO = new CustomerProductDTO();
+                productDTO.setId(product.getId());
+                productDTO.setProductId(product.getProductId());
+                
+                ProductDTO productInfo = productInfoMap.get(product.getProductId());
+                if (productInfo != null) {
+                    productDTO.setProductName(productInfo.getName());
+                } else {
+                    productDTO.setProductName("Product info unavailable");
+                    log.warn("Product info not found for productId: {}", product.getProductId());
+                }
+                
+                return productDTO;
+            })
+            .collect(Collectors.toList());
 
-                        ProductDTO productInfo = productClientService.getProduct(product.getProductId()).block();
-                        if (productInfo != null) {
-                            productDTO.setProductName(productInfo.getName());
-                        }
-
-                        return productDTO;
-                    })
-                    .collect(Collectors.toList());
+    }
+    
+    private Map<Long, ProductDTO> getProductsBatch(List<Long> productIds) {
+        try {
+            List<ProductDTO> products = productClientService.getProductsByIds(productIds);
+            return products.stream()
+                .collect(Collectors.toMap(ProductDTO::getId, Function.identity()));
+                
+        } catch (Exception e) {
+            log.warn("Batch product service call failed, falling back to individual calls");
+            
+            return productIds.stream()
+                .collect(Collectors.toMap(
+                    Function.identity(),
+                    this::getProductSafely,
+                    (existing, replacement) -> existing
+                ));
+        }
+    }
+    
+    private ProductDTO getProductSafely(Long productId) {
+        try {
+            return productClientService.getProduct(productId)
+                .timeout(Duration.ofSeconds(2))
+                .block();
+        } catch (Exception e) {
+            log.warn("Failed to get product {}: {}", productId, e.getMessage());
+            // Retorna un producto "dummy" en lugar de null
+            ProductDTO dummy = new ProductDTO();
+            dummy.setId(productId);
+            dummy.setName("Product unavailable");
+            return dummy;
+        }
     }
     
     private void ValidateProduct(Long productId) {
         ProductDTO productInfo = productClientService.getProduct(productId).block();    
+    }
+
+    private List<CustomerProductDTO> testProductServiceAvailability() {
+        try {
+            productClientService.healthCheck();
+            log.debug("Product service is available, customer genuinely has no products");
+            return Collections.emptyList();
+
+        } catch (Exception e) {
+            log.warn("Product service connectivity test failed: {}", e.getMessage());
+            throw new RuntimeException("Product service connectivity test failed", e);
+        }
     }
 }

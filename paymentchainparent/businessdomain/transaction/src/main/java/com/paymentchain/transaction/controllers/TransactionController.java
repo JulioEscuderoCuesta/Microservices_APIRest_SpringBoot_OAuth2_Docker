@@ -13,19 +13,12 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PostMapping;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.github.fge.jsonpatch.JsonPatch;
-import com.github.fge.jsonpatch.JsonPatchException;
-import com.paymentchain.transaction.dtos.UpdateTransactionDTO;
 import jakarta.validation.Valid;
 import java.net.URI;
-import java.net.UnknownHostException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 /**
@@ -41,17 +34,17 @@ public class TransactionController {
     TransactionService transactionService;
 
     @GetMapping()
-    public List<TransactionDTO> findAll() {
+    public List<TransactionDTO> getAllTransactions() {
         return transactionService.findAll();
     }
     
     @GetMapping("/reference/{reference}")
-    public ResponseEntity<TransactionDTO> get(@PathVariable String reference) {
+    public ResponseEntity<TransactionDTO> getTransactionByReference(@PathVariable String reference) {
         return ResponseEntity.ok(transactionService.getTransactionByReference(reference));
     }
     
     @GetMapping("/iban/{iban}")
-    public ResponseEntity<List<TransactionDTO>> getTransactions(@PathVariable String iban) {
+    public ResponseEntity<List<TransactionDTO>> getTransactionsByIban(@PathVariable String iban) {
         List<TransactionDTO> transactions = transactionService.getTransactionsByIban(iban);
         if (transactions.isEmpty())
             return ResponseEntity.noContent().build();
@@ -59,7 +52,7 @@ public class TransactionController {
     }
     
     @PostMapping
-    public ResponseEntity<TransactionDTO> post(@Valid @RequestBody CreateTransactionDTO createTransactionDTO) {
+    public ResponseEntity<TransactionDTO> createTransaction(@Valid @RequestBody CreateTransactionDTO createTransactionDTO) {
         TransactionDTO transactionDTO = transactionService.createTransaction(createTransactionDTO);
 
         URI location = ServletUriComponentsBuilder

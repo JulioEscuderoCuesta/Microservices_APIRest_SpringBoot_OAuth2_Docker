@@ -30,6 +30,8 @@ public class Product {
     @NotBlank(message = "Product code is required")
     @Column(nullable = false, unique = true)
     private String code;
+    @NotBlank(message = "Product price must be greater than 0")
+    private Double price;
     
     
 }

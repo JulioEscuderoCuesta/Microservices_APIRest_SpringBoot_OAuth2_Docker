@@ -7,9 +7,11 @@ package com.paymentchain.transaction.service;
 import com.paymentchain.transaction.dtos.CustomerDTO;
 import com.paymentchain.transaction.exceptions.TransactionException;
 import java.net.UnknownHostException;
+import java.time.Duration;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -24,6 +26,7 @@ import reactor.core.publisher.Mono;
 public class CustomerClientService {
     
     private final WebClient webClient;
+    private static final String URI_IBAN_CUSTOMER = "/iban/{iban}";
 
     public CustomerClientService(WebClient.Builder webClientBuilder) {
         this.webClient = webClientBuilder
@@ -35,12 +38,8 @@ public class CustomerClientService {
     
     public CustomerDTO getCustomerByIban(String iban) {
         try {
-            log.info("Starting request to get customer with IBAN: {}", iban);
-            String uri = "/iban/{iban}";
-            log.info("Full request URL will be: {}{}", webClient.get().uri(uri, iban), uri);
-
             CustomerDTO customer = webClient.get()
-                .uri(uri, iban)
+                .uri(URI_IBAN_CUSTOMER, iban)
                 .retrieve()
                 .onStatus(httpStatus -> httpStatus.is4xxClientError(), 
                     error -> {
@@ -67,7 +66,6 @@ public class CustomerClientService {
                 .bodyToMono(CustomerDTO.class)
                 .block();
 
-            log.info("Successfully retrieved customer: {}", customer);
             return customer;
             
         } catch (Exception e) {
@@ -91,9 +89,7 @@ public class CustomerClientService {
     
     public CustomerDTO updateBalance(String iban, double amountOfTransaction) {
         try {
-            log.info("Starting request to update balance for customer with IBAN: {} with amount: {}", iban, amountOfTransaction);
             String uri = "/iban/{iban}/balance";
-            log.info("Full request URL will be: {}{}", webClient.mutate().build().put().uri(uri, iban), uri);
 
             CustomerDTO updatedCustomer = webClient.put()
                 .uri(uri, iban)
@@ -125,7 +121,6 @@ public class CustomerClientService {
                 .bodyToMono(CustomerDTO.class)
                 .block();
 
-            log.info("Successfully updated customer balance: {}", updatedCustomer);
             return updatedCustomer;
 
         } catch (Exception e) {
@@ -143,6 +138,61 @@ public class CustomerClientService {
             throw new TransactionException(
                 "CUSTOMER_SERVICE_ERROR", 
                 "Failed to update customer balance: " + e.getMessage(), 
+                HttpStatus.INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+    
+    public boolean existsByIban(String iban) {
+        try {
+            return checkCustomerExists(iban);
+        } catch (Exception e) {
+            log.warn("Customer service unavailable when checking IBAN {}: {}", iban, e.getMessage());
+            return true;
+        }
+    }
+    
+
+    private boolean checkCustomerExists(String iban) {
+        try {
+            CustomerDTO customer = webClient.get()
+                .uri(URI_IBAN_CUSTOMER, iban)
+                .retrieve()
+                .onStatus(HttpStatusCode::is4xxClientError, 
+                    response -> {
+                        if (response.statusCode().value() == 404) {
+                            log.debug("Customer not found for IBAN: {}", iban);
+                            return Mono.empty();
+                        } else {
+                            log.error("Client error checking customer. Status code: {}", response.statusCode());
+                            return Mono.error(new RuntimeException("Client error: " + response.statusCode()));
+                        }
+                    })
+                .onStatus(HttpStatusCode::is5xxServerError,
+                    response -> {
+                        log.error("Server error from customer service. Status code: {}", response.statusCode());
+                        return Mono.error(new RuntimeException("Customer service temporarily unavailable"));
+                    })
+                .bodyToMono(CustomerDTO.class)
+                .timeout(Duration.ofSeconds(3))
+                .block();
+
+            return customer != null;
+            
+        } catch (Exception e) {
+            if (e.getCause() instanceof UnknownHostException) {
+                throw new TransactionException(
+                    "CUSTOMER_SERVICE_UNAVAILABLE", 
+                    "Customer service is not available (network error)", 
+                    HttpStatus.SERVICE_UNAVAILABLE
+                );            }
+            if (e instanceof TransactionException transactionException) {
+                throw transactionException;
+            }
+            log.error("Unexpected error getting customer", e);
+            throw new TransactionException(
+                "CUSTOMER_SERVICE_ERROR", 
+                "Failed to get customer: " + e.getMessage(), 
                 HttpStatus.INTERNAL_SERVER_ERROR
             );
         }

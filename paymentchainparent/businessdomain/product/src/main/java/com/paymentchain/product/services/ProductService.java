@@ -9,6 +9,7 @@ import com.paymentchain.product.entities.Product;
 import com.paymentchain.product.exceptions.ProductException;
 import com.paymentchain.product.repositories.ProductRepository;
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -28,35 +29,66 @@ public class ProductService {
         this.productRepository = productRepository;
     }
     
-    public Product getProductById(Long id) {
-        return findProduct(id);
+    public ProductDTO getProductById(Long id) {
+        Product product = findProduct(id);
+        return convertToDTO(product);
     }
     
-    public List<Product> findAll() {
+    public List<ProductDTO> findAll() {
         List<Product> products = productRepository.findAll();
-        return products;  
+        return products.stream()
+                .map(this::convertToDTO) 
+                .collect(Collectors.toList()); 
     }
     
-    public Product createProduct(ProductDTO dto) {
-        Product product = new Product();
-        product.setName(dto.getName());
-        product.setCode(dto.getCode());
+    public List<ProductDTO> getProductsByIds(List<Long> productIds) {        
+        List<Product> products = productRepository.findByIdIn(productIds);
         
-        return saveProduct(product);
+        // Convert to DTOs
+        List<ProductDTO> productDTOs = products.stream()
+            .map(this::convertToDTO)
+            .collect(Collectors.toList());
+        
+        return productDTOs;
+    }
+    
+    public Product createProduct(ProductDTO productDTO) {
+        try {
+            Product product = convertToEntity(productDTO);
+            return productRepository.save(product);
+        } catch (DataIntegrityViolationException e) {
+            log.error("Data integrity violation creating product: {}", e.getMessage());
+            throw new ProductException(
+                "PRODUCT_DATA_CONFLICT",
+                "Product data violates constraints: " + e.getMessage(),
+                HttpStatus.CONFLICT
+            );
+        } catch (Exception e) {
+            log.error("Unexpected error creating product", e);
+            throw new ProductException(
+                "PRODUCT_CREATION_ERROR",
+                "Failed to create product: " + e.getMessage(),
+                HttpStatus.INTERNAL_SERVER_ERROR
+            );
+        }
     } 
     
-    public Product updateProduct(Long id, ProductDTO dto) {
+    public Product updateProduct(Long id, ProductDTO productDto) {
         Product product = findProduct(id);
         
-        if (dto.getCode() != null && !product.getName().equals(dto.getName())) {
-            product.setCode(dto.getCode());
+        if (productDto.getCode() != null && !product.getName().equals(productDto.getName())) {
+            product.setCode(productDto.getCode());
         }
         
-        if (dto.getName() != null && !product.getName().equals(dto.getName())) {
-            product.setName(dto.getName());
+        if (productDto.getName() != null && !product.getName().equals(productDto.getName())) {
+            product.setName(productDto.getName());
         }
         
-        return saveProduct(product);
+        if (productDto.getPrice() != null && productDto.getPrice() > 0) {
+            product.setPrice(productDto.getPrice());
+        }
+                
+        return productRepository.save(product);
     }
     
     public Product deleteProductById(Long id) {
@@ -78,23 +110,20 @@ public class ProductService {
             ));
     }
     
-    private Product saveProduct(Product product) {
-        try {
-            return productRepository.save(product);
-        } catch (DataIntegrityViolationException e) {
-            log.error("Data integrity violation creating product: {}", e.getMessage());
-            throw new ProductException(
-                "PRODUCT_DATA_CONFLICT",
-                "Product data violates constraints: " + e.getMessage(),
-                HttpStatus.CONFLICT
-            );
-        } catch (Exception e) {
-            log.error("Unexpected error creating customer", e);
-            throw new ProductException(
-                "PRODUCT_CREATION_ERROR",
-                "Failed to create product: " + e.getMessage(),
-                HttpStatus.INTERNAL_SERVER_ERROR
-            );
-        }
+    
+    private ProductDTO convertToDTO(Product product) {
+        ProductDTO productDTO = new ProductDTO();
+        productDTO.setName(product.getName());
+        productDTO.setCode(product.getCode());
+        productDTO.setPrice(product.getPrice());
+        return productDTO;
+    }
+    
+    private Product convertToEntity(ProductDTO productDTO) {
+        Product product = new Product();
+        product.setName(productDTO.getName());
+        product.setCode(productDTO.getCode());
+        product.setPrice(productDTO.getPrice());
+        return product;
     }
 }

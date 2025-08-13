@@ -6,6 +6,9 @@ package com.paymentchain.customer.services;
 
 import com.paymentchain.customer.dto.ProductDTO;
 import com.paymentchain.customer.exceptions.CustomerException;
+import java.time.Duration;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -49,6 +52,33 @@ public class ProductClientService {
                         HttpStatus.valueOf(error.statusCode().value())));
                 })
             .bodyToMono(ProductDTO.class);
+    }
+    
+    public List<ProductDTO> getProductsByIds(List<Long> productIds) {
+        String ids = productIds.stream()
+            .map(String::valueOf)
+            .collect(Collectors.joining(","));
+            
+        return webClient.get()
+            .uri("/products/batch?ids={ids}", ids)
+            .retrieve()
+            .bodyToFlux(ProductDTO.class)
+            .collectList()
+            .timeout(Duration.ofSeconds(5))
+            .block();
+    }
+
+    public void healthCheck() {
+        try {
+            webClient.head()
+                .uri("/product")
+                .retrieve()
+                .toBodilessEntity()
+                .timeout(Duration.ofSeconds(2))
+                .block();
+        } catch (Exception e) {
+            throw new RuntimeException("Product service is not reachable", e);
+        }    
     }
     
 }
