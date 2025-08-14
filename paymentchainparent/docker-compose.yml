@@ -34,7 +34,7 @@ services:
       timeout: 10s
       retries: 3
       
-  pgadmin:
+  pgadmin4:
     image: dpage/pgadmin4:latest
     container_name: pgadmin4
     restart: unless-stopped
@@ -57,6 +57,10 @@ services:
       
   # Eureka server
   eureka-server:
+    build: 
+      context: ./infraestructuredomain/eurekaServer
+      args:
+        JAR_FILE: target/eurekaServer-0.0.1-SNAPSHOT.jar
     image: eureka-server:latest
     container_name: eureka-server
     restart: unless-stopped
@@ -70,9 +74,32 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
+      
+  # Apigateway service
+  apigateway-service:
+    build: 
+      context: ./infraestructuredomain/api_gateway
+      args:
+        JAR_FILE: target/apigateway-0.0.1-SNAPSHOT.jar    
+    image: apigateway-service:latest
+    container_name: apigateway-service
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    networks:
+      - microservices-network
+    environment:
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    depends_on:
+      eureka-server:
+        condition: service_healthy
         
   # Customer service
   customer-service:
+    build: 
+      context: ./businessdomain/customer
+      args:
+        JAR_FILE: target/customer-0.0.1-SNAPSHOT.jar
     image: customer-service:latest
     container_name: customer-service
     restart: unless-stopped
@@ -93,6 +120,10 @@ services:
         
   # Product service
   product-service:
+    build: 
+      context: ./businessdomain/product
+      args:
+        JAR_FILE: target/product-0.0.1-SNAPSHOT.jar
     image: product-service:latest
     container_name: product-service
     restart: unless-stopped
@@ -113,6 +144,10 @@ services:
 
   # Transaction service
   transaction-service:
+    build: 
+      context: ./businessdomain/transaction
+      args:
+        JAR_FILE: target/transaction-0.0.1-SNAPSHOT.jar
     image: transaction-service:latest
     container_name: transaction-service
     restart: unless-stopped

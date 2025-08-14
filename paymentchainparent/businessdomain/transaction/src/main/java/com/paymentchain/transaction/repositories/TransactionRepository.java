@@ -19,7 +19,7 @@ import org.springframework.stereotype.Repository;
 public interface TransactionRepository extends JpaRepository<Transaction, Long>{
     
     @Query("SELECT t FROM Transaction t WHERE t.reference = :reference")
-    Optional<Transaction> findByReference(@Param ("reference") String reference);
+    Optional<Transaction> findTransactionByReference(@Param ("reference") String reference);
     
-    List<Transaction> findByIban(String iban);
+    List<Transaction> findTransactionByIban(String iban);
 }

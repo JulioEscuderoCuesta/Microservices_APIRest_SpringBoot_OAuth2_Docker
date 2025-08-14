@@ -31,7 +31,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
  * @author Hp
  */
 @RestController
-@RequestMapping("/customer")
+@RequestMapping("/customers")
 @CrossOrigin(origins = "http://localhost:3000")
 public class CustomerRestController {
     
@@ -40,7 +40,7 @@ public class CustomerRestController {
 
     //Http Methods
     @GetMapping()
-    public ResponseEntity<List<CustomerDTO>> getAll() {
+    public ResponseEntity<List<CustomerDTO>> getCustomers() {
         List<CustomerDTO> customers = customerService.getCustomers();
         if (customers.isEmpty()) {
             return ResponseEntity.noContent().build();
@@ -49,7 +49,7 @@ public class CustomerRestController {
     }
     
     @GetMapping("/{id}")
-    public ResponseEntity<CustomerDTO> get(@PathVariable Long id) {
+    public ResponseEntity<CustomerDTO> getCustomerById(@PathVariable Long id) {
         return ResponseEntity.ok(customerService.getCustomerById(id));
     }
     
@@ -69,30 +69,30 @@ public class CustomerRestController {
     }
     
     @GetMapping("/full")
-    public ResponseEntity<CustomerDTO> getByCode(@RequestParam String code) {
+    public ResponseEntity<CustomerDTO> getCustomerByCode(@RequestParam String code) {
         CustomerDTO customer = customerService.getCustomerByCode(code);
         return ResponseEntity.ok(customer);
     }
     
     @GetMapping("/{iban}/transactions")
-    public ResponseEntity<List<TransactionDTO>> getTransactions(@PathVariable String iban) {
-        return ResponseEntity.ok(customerService.getTransactionsByIban(iban));  
+    public ResponseEntity<List<TransactionDTO>> getCustomerTransactionsByIban(@PathVariable String iban) {
+        return ResponseEntity.ok(customerService.getCustomerTransactionsByIban(iban));  
     }
     
     @PutMapping("/{id}")
-    public ResponseEntity<CustomerDTO> put(@PathVariable Long id, @RequestBody UpdateCustomerDTO updateDTO) {
+    public ResponseEntity<CustomerDTO> updateCustomer(@PathVariable Long id, @RequestBody UpdateCustomerDTO updateDTO) {
         CustomerDTO updatedCustomer = customerService.updateCustomer(id, updateDTO);
         return ResponseEntity.ok(updatedCustomer);
     }
     
     @PutMapping("/iban/{iban}/balance")
-    public ResponseEntity<CustomerDTO> updateBalance(@PathVariable String iban, @RequestBody double amount) {
+    public ResponseEntity<CustomerDTO> updateCustomerBalance(@PathVariable String iban, @RequestBody double amount) {
         CustomerDTO updatedCustomer = customerService.updateBalance(iban, amount);
         return ResponseEntity.ok(updatedCustomer);
     }
         
     @PostMapping
-    public ResponseEntity<CustomerDTO> post(@RequestBody CreateCustomerDTO createCustomerDTO) {
+    public ResponseEntity<CustomerDTO> createCustomer(@RequestBody CreateCustomerDTO createCustomerDTO) {
         CustomerDTO postCustomer = customerService.createCustomer(createCustomerDTO);
 
         URI location = ServletUriComponentsBuilder
@@ -105,7 +105,7 @@ public class CustomerRestController {
     }
     
     @PostMapping("/{customerId}/products/{productId}")
-    public ResponseEntity<CustomerDTO> addProduct(@PathVariable Long customerId, @PathVariable Long productId) {
+    public ResponseEntity<CustomerDTO> addProductToCustomer(@PathVariable Long customerId, @PathVariable Long productId) {
         CustomerDTO customer = customerService.addProductToCustomer(customerId, productId);
 
         URI location = ServletUriComponentsBuilder
@@ -118,13 +118,13 @@ public class CustomerRestController {
     }
     
     @DeleteMapping("/{id}")
-    public ResponseEntity<CustomerDTO> delete(@PathVariable Long id) {
+    public ResponseEntity<CustomerDTO> deleteCustomer(@PathVariable Long id) {
         CustomerDTO customer = customerService.deleteCustomer(id);
         return ResponseEntity.ok(customer);
     }
     
     @DeleteMapping("/{customerId}/products/{productId}")
-    public ResponseEntity<CustomerDTO> removeProduct(@PathVariable Long customerId, @PathVariable Long productId) {
+    public ResponseEntity<CustomerDTO> removeProductFromCustomer(@PathVariable Long customerId, @PathVariable Long productId) {
         CustomerDTO customer = customerService.removeProductFromCustomer(customerId, productId);
         return ResponseEntity.ok(customer);
     }

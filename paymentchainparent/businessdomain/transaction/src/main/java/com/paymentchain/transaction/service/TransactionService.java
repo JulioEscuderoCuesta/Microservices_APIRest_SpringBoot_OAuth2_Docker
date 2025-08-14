@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ import org.springframework.stereotype.Service;
  * @author Hp
  */
 @Service
+@Slf4j
 public class TransactionService {
  
     @Autowired
@@ -44,7 +46,7 @@ public class TransactionService {
     }
     
     public TransactionDTO getTransactionByReference(String reference) {
-        Transaction transaction = transactionRepository.findByReference(reference)
+        Transaction transaction = transactionRepository.findTransactionByReference(reference)
             .orElseThrow(() -> new TransactionException(
                 reference,
                 "TRANSACTION_NOT_FOUND", 
@@ -55,7 +57,18 @@ public class TransactionService {
     } 
     
     public List<TransactionDTO> getTransactionsByIban(String iban) {
-        List<Transaction> transactions = transactionRepository.findByIban(iban);
+        // Validate user with this iban exists
+        if (!customerExists(iban)) {
+            throw new TransactionException(
+                    iban,
+                    "IBAN_NOT_FOUND",
+                    "IBAN " + iban + " does not exist in the system",
+                    HttpStatus.NOT_FOUND
+            );
+        }
+        
+        List<Transaction> transactions = transactionRepository.findTransactionByIban(iban);
+        
         return transactions.stream()
             .map(this::convertToDTO)
             .collect(Collectors.toList());
@@ -110,6 +123,10 @@ public class TransactionService {
         
         return dto;
     } 
+    
+    private boolean customerExists(String iban) {
+        return customerClientService.existsByIban(iban);
+    }
     
     private String generateReference() {
         LocalDateTime now = LocalDateTime.now();

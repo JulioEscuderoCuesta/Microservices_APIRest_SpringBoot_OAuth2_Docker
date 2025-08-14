@@ -19,7 +19,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface CustomerRepository extends JpaRepository<Customer, Long> {
 
-    @Query("SELECT c FROM Customer c LEFT JOIN FETCH c.products")
+    @Query("SELECT DISTINCT c FROM Customer c LEFT JOIN FETCH c.products p")
     List<Customer> findCustomers();
     
     @Query("SELECT c FROM Customer c LEFT JOIN FETCH c.products WHERE c.id = :id")

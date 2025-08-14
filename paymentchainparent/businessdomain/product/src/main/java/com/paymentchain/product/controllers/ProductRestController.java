@@ -20,6 +20,9 @@ import org.springframework.web.bind.annotation.PutMapping;
 import com.paymentchain.product.services.ProductService;
 import jakarta.validation.Valid;
 import java.net.URI;
+import java.util.Arrays;
+import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 /**
@@ -27,29 +30,63 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
  * @author Hp
  */
 @RestController
-@RequestMapping("/product")
+@RequestMapping("/products")
+@Slf4j
 public class ProductRestController {
     
     @Autowired
     ProductService productService;
         
     @GetMapping()
-    public List<Product> findAll() {
+    public List<ProductDTO> findAll() {
         return productService.findAll();
     }
     
     @GetMapping("/{id}")
-    public ResponseEntity<?> get(@PathVariable long id) {
+    public ResponseEntity<ProductDTO> getProductById(@PathVariable long id) {
         return ResponseEntity.ok(productService.getProductById(id));
     }
     
+    @GetMapping("/batch/{ids}")
+    public ResponseEntity<List<ProductDTO>> getProductsBatchPath(@PathVariable String ids) {
+    try {
+            List<Long> productIds = Arrays.stream(ids.split(","))
+                .map(String::trim)
+                .map(Long::valueOf)
+                .collect(Collectors.toList());
+            
+            if (productIds.isEmpty()) {
+                return ResponseEntity.badRequest().build();
+            }
+            
+            // Limitar number of products requested
+            if (productIds.size() > 100) {
+                log.warn("Too many product IDs requested: {}. Limiting to 100.", productIds.size());
+                productIds = productIds.subList(0, 100);
+            }
+            
+            List<ProductDTO> products = productService.getProductsByIds(productIds);
+            
+            if (products.isEmpty()) {
+                return ResponseEntity.noContent().build();
+            }
+            
+            return ResponseEntity.ok(products);
+            
+        } catch (NumberFormatException e) {
+            log.error("Invalid product IDs format: {}", ids);
+            return ResponseEntity.badRequest().build();
+        }
+    }
+    
+    
     @PutMapping("/{id}")
-    public ResponseEntity<?> put(@PathVariable long id, @RequestBody ProductDTO productDTO) {
+    public ResponseEntity<Product> updateProduct(@PathVariable long id, @RequestBody ProductDTO productDTO) {
         return ResponseEntity.ok(productService.updateProduct(id, productDTO));
     }
     
     @PostMapping
-    public ResponseEntity<?> post(@Valid @RequestBody ProductDTO productDTO) {
+    public ResponseEntity<Product> createProduct(@Valid @RequestBody ProductDTO productDTO) {
         Product product = productService.createProduct(productDTO);
 
         URI location = ServletUriComponentsBuilder
@@ -62,7 +99,7 @@ public class ProductRestController {
     }
     
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(@PathVariable long id) {
+    public ResponseEntity<?> deleteProduct(@PathVariable long id) {
         return ResponseEntity.ok(productService.deleteProductById(id));
     }
     

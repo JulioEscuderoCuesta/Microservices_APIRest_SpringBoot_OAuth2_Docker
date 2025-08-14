@@ -4,7 +4,6 @@
  */
 package com.paymentchain.product.dtos;
 
-import jakarta.persistence.Column;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
@@ -19,5 +18,7 @@ public class ProductDTO {
     private String name;
     @NotBlank(message = "Product code is required")
     private String code;
+    @NotBlank(message = "Product price is required")
+    private Double price;
     
 }

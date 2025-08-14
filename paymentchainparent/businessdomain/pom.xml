@@ -18,15 +18,12 @@
         <module>product</module>
         <module>transaction</module>
     </modules>
-    
-    
+
     <properties>
         <spring-cloud-dependencies.version>2024.0.0</spring-cloud-dependencies.version>  
         <org.mapstruct.version>1.5.5.Final</org.mapstruct.version>   
-        <org.lombo.version>1.18.36</org.lombo.version>    
         <org.springdoc.version>2.7.0</org.springdoc.version>     
         <org.mockito.version>5.14.2</org.mockito.version>
-         
     </properties>
     
     <dependencyManagement>
@@ -49,16 +46,10 @@
                 <version>3.5.3</version>
             </dependency>
             <dependency>
-                <groupId>org.projectlombok</groupId>
-                <artifactId>lombok</artifactId>
-                <version>${org.lombo.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>org.mockito</groupId>
                 <artifactId>mockito-core</artifactId>
                 <version>${org.mockito.version}</version>
             </dependency>
-            
         </dependencies>
     </dependencyManagement>
            
@@ -103,7 +94,6 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <optional>true</optional>
         </dependency>       
         
         <!-- mapper beans -->
