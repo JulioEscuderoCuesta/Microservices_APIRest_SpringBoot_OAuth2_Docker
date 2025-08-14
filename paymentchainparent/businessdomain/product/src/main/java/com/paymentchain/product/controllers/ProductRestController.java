@@ -30,7 +30,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
  * @author Hp
  */
 @RestController
-@RequestMapping("/product")
+@RequestMapping("/products")
 @Slf4j
 public class ProductRestController {
     

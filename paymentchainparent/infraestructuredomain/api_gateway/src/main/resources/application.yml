@@ -2,41 +2,36 @@
 ---
 
 server:
+  address: 0.0.0.0
   port: 8080
   
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://eureka-server:8761/eureka/
 logging:
   level:
-    org.springframework.cloud.gateway: WARN
-    reactor.netty.http.client: WARN
-    org.springframework.boot.autoconfigure: WARN 
-    org.springframework.context: WARN
-  
-# Config for Feign Clients
-services:
-  customer:
-    url: http://localhost:8081
-  transaction:
-    url: http://localhost:8082
+    org.springframework.cloud.gateway: DEBUG
+    reactor.netty.http.client: DEBUG
     
 spring:
+  application:
+    name: apigateway
   cloud:
     gateway:
       routes:
-        # BFF Route
-        - id: customer_bff
-          uri: http://localhost:8080
-          predicates:
-            - Path=/customers-enriched/**
-          filters:
-            - RewritePath=/customers-enriched/(?<segment>.*), /bff/customers/$\{segment}
-        
         # Routes to microservices
         - id: customer_service
-          uri: http://localhost:8081 
+          uri: lb://customer-service
           predicates:
             - Path=/customers/**
             
         - id: transaction_service
-          uri: http://localhost:8082
+          uri: lb://transaction-service
           predicates:
             - Path=/transactions/**
+            
+        - id: product_service
+          uri: lb://product-service
+          predicates:
+            - Path=/products/**

@@ -31,7 +31,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
  * @author Hp
  */
 @RestController
-@RequestMapping("/customer")
+@RequestMapping("/customers")
 @CrossOrigin(origins = "http://localhost:3000")
 public class CustomerRestController {
     
