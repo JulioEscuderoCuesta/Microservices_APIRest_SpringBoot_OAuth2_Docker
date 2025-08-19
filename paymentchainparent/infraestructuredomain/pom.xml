@@ -15,6 +15,7 @@
         <module>configServer</module>
         <module>eurekaServer</module>
         <module>api_gateway</module>
+        <module>keycloakAdapter</module>
     </modules>
     <properties>
         <!--spring cloud version, please check the table https://spring.io/projects/spring-cloud compatibility version with spring boot framework-->
